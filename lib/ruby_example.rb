@@ -11,7 +11,6 @@ require "zeitwerk"
 Zeitwerk::Loader.for_gem.then do |loader|
   loader.inflector.inflect("cli" => "CLI")
   loader.setup
-  loader.ignore("#{__dir__}/ollama_rest/migrations")
 end
 
 # Main namespace.

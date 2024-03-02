@@ -10,6 +10,7 @@ group :code_quality do
   gem "git-lint", "~> 7.0"
   gem "reek", "~> 6.3", require: false
   gem "rubocop-shopify", require: false
+  gem "simplecov", "~> 0.22", require: false
 end
 
 group :development do
