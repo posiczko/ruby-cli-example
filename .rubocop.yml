@@ -1,0 +1,9 @@
+AllCops:
+  SuggestExtensions: false
+inherit_gem:
+  rubocop-shopify: rubocop.yml
+
+Style/ClassAndModuleChildren:
+  Enabled: false
+Layout/SpaceAroundOperators:
+  Enabled: false

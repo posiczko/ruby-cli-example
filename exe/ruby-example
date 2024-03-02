@@ -1,0 +1,9 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+SCRIPT_DIR = File.expand_path(File.dirname(__FILE__))
+$LOAD_PATH.unshift(File.expand_path(File.join(SCRIPT_DIR, "../lib")))
+
+require "ruby_example"
+
+Dry::CLI.new(RubyExample::CLI::Commands).call
