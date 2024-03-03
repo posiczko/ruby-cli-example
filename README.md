@@ -58,6 +58,21 @@ To contribute, run:
     cd ruby_example
     bin/setup
 
+To rename:
+
+* Globally rename `ruby_example` to `<project_name>` in project.
+* Globally rename `RubyExample` to `<ProjectName>` in project.
+* Rename `lib/ruby_example` and `lib/ruby_example.rb` to `lib/<project_name>` and 
+  `lib/<project_name>.rb`
+* Rename `spec/lib/ruby_example_spec.rb` to `spec/lib/<project_name>_spec.rb`.
+* Rename `exe/ruby_example` to `exe/<project_name>`.
+* Ensure to run `bundle update --bundler` followed by `bundle install`.
+* Remove `.git` and reinitialize repo.
+* Verify by running `bundle exec exe/<project_name>`
+* Verify by running `bin/rake`
+* Verify by running `bin/console`
+* Verify bu running `bin/guard`
+
 You can also use the IRB console for direct access to all objects:
 
     bin/console
