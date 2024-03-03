@@ -2,8 +2,8 @@
 
 require "spec_helper"
 
-RSpec.describe RubyExample do
-    it "exists" do
-      expect(RubyExample).to be_a(Module)
-    end
+RSpec.describe(RubyExample) do
+  it "exists" do
+    expect(RubyExample).to(be_a(Module))
+  end
 end
