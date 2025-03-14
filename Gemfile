@@ -7,25 +7,25 @@ source "https://rubygems.org"
 gemspec
 
 group :code_quality do
-  gem "git-lint", "~> 7.0"
-  gem "reek", "~> 6.3", require: false
+  gem "git-lint"
+  gem "reek", require: false
   gem "rubocop-shopify", require: false
-  gem "simplecov", "~> 0.22", require: false
+  gem "simplecov", require: false
 end
 
 group :development do
-  gem "rake", "~> 13.1"
+  gem "rake"
   gem "rubocop", require: false
-  gem "tocer", "~> 17.0"
+  gem "tocer"
 end
 
 group :test do
-  gem "guard-rspec", "~> 4.7", require: false
-  gem "rspec", "~> 3.12"
+  gem "guard-rspec", require: false
+  gem "rspec"
 end
 
 group :tools do
-  gem "amazing_print", "~> 1.5"
+  gem "amazing_print"
   gem "irb"
-  gem "debug", "~> 1.9"
+  gem "debug"
 end

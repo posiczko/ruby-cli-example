@@ -14,13 +14,13 @@ Gem::Specification.new do |spec|
   spec.signing_key = Gem.default_key_path
   spec.cert_chain = [Gem.default_cert_path]
 
-  spec.required_ruby_version = "~> 3.3"
+  spec.required_ruby_version = "~> 3.4"
   spec.add_dependency("dotenv")
-  spec.add_dependency("dry-cli", "~> 1.0")
+  spec.add_dependency("dry-cli", "~> 1.1")
   spec.add_dependency("dry-logger")
-  spec.add_dependency("refinements", "~> 12.0")
-  spec.add_dependency("runcom", "~> 11.0")
-  spec.add_dependency("zeitwerk", "~> 2.6")
+  spec.add_dependency("refinements")
+  spec.add_dependency("runcom")
+  spec.add_dependency("zeitwerk")
 
   spec.bindir = "exe"
   spec.executables << "ruby_example"
