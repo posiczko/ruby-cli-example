@@ -11,7 +11,10 @@ namespace(:db) do
       # Filename is snake_case, class is CamelCase, so either input style
       # (CreateEmployee or create_employee) yields a migration AR can load.
       # Migrations live under lib/example/db/migrations (relative to this file).
-      path = File.expand_path("../../example/db/migrations/#{timestamp}_#{name.underscore}.rb", __dir__)
+      path = File.expand_path(
+        "../../#{Example.config.module_name}/db/migrations/#{timestamp}_#{name.underscore}.rb",
+        __dir__
+      )
       migration_class = name.camelize
 
       FileUtils.mkdir_p(File.dirname(path))
