@@ -1,5 +1,12 @@
 require "active_record"
 
+# Ensure the gem's lib/ is on the load path so `require "example"` (and the
+# library's own load-path-style requires) resolve under bare `rake`, not just
+# `bundle exec`.
+lib = File.expand_path("../..", __dir__)
+$LOAD_PATH.unshift(lib) unless $LOAD_PATH.include?(lib)
+require "example"
+
 # Usage:
 #
 # # dump the development db
@@ -23,41 +30,70 @@ require "active_record"
 # # restore db based on a backup file pattern (e.g. timestamp)
 # rake db:restore pattern=20170101
 #
-# # note: config/database.yml is used for database configuration,
-# #       but you will be prompted for the database user's password
+# # note: the database config file is resolved via Example.config (the same
+# #       XDG-located database.yml the CLI writes), but you will be prompted
+# #       for the database user's password
 #
 namespace(:db) do
+  desc("Write the database config file from Example.config (overwrite=true to replace an existing one)")
+  task(:config_create) do
+    path = Example.config.database_config.global
+    if File.exist?(path) && !ENV["overwrite"]
+      puts("Config already exists at #{path} (pass overwrite=true to replace it).")
+    else
+      db = Example.config.database
+      yaml = {
+        "adapter" => db.adapter,
+        "host" => db.host,
+        "pool" => db.pool,
+        "encoding" => db.encoding,
+        "database" => db.name
+      }.to_yaml
+      FileUtils.mkdir_p(File.dirname(path))
+      File.write(path, yaml)
+      puts("Wrote database config to #{path}")
+    end
+  end
+
   desc("Create the database")
   task(:create) do
-    setup_config
     ActiveRecord::Base.establish_connection(db_config_admin)
+    puts("Creating database #{db_config["database"]} ...")
     ActiveRecord::Base.connection.create_database(db_config["database"])
     puts("Database created.")
   end
 
   desc("Migrate the database")
   task(:migrate) do
-    setup_config
     ActiveRecord::Base.establish_connection(db_config)
     ActiveRecord::Base.connection.pool.migration_context.migrate
     Rake::Task["db:schema"].invoke
     puts("Database migrated.")
   end
 
-  desc("Drop the database")
+  desc("Drop the database (prompts for confirmation; set FORCE=1 to skip)")
   task(:drop) do
-    setup_config
+    database = db_config["database"]
+    unless confirm?("Permanently drop database '#{database}'?")
+      abort("Aborted; database '#{database}' was not dropped.")
+    end
+
     ActiveRecord::Base.establish_connection(db_config_admin)
-    ActiveRecord::Base.connection.drop_database(db_config["database"])
+    ActiveRecord::Base.connection.drop_database(database)
     puts("Database deleted.")
   end
 
   desc("Reset the database")
-  task(reset: [:drop, :create, :migrate])
+  task(:reset) do
+    with_force do
+      Rake::Task["db:drop"].invoke
+      Rake::Task["db:create"].invoke
+      Rake::Task["db:migrate"].invoke
+    end
+  end
 
   desc("Create a db/schema.rb file that is portable against any DB supported by AR")
   task(:schema) do
-    setup_config
     connection = ActiveRecord::Base.establish_connection(db_config)
     require "active_record/schema_dumper"
 
@@ -69,7 +105,6 @@ namespace(:db) do
 
   desc("Rollback the last migration")
   task(:rollback) do
-    setup_config
     step = ENV["STEP"] ? ENV["STEP"].to_i : 1
 
     ActiveRecord::Base.establish_connection(db_config)
@@ -82,7 +117,6 @@ namespace(:db) do
 
   desc("Dumps the database to db/backups/")
   task(:dump) do
-    setup_config
     timestamp = Time.now.strftime("%Y-%m-%d-%H-%M")
     dump_file = "db/backups/#{db_config["database"]}_#{timestamp}.backups"
     cmd = <<~HEREDOC
@@ -103,7 +137,6 @@ namespace(:db) do
 
   desc("Show the existing database backups")
   task(:list_dumps) do
-    setup_config
     dir = backup_directory
     cmd = "/usr/bin/find #{dir} -type f -exec ls -alt {} \\+"
     puts(cmd)
@@ -112,11 +145,8 @@ namespace(:db) do
 
   desc("Restore the database from the backup from db/backups/restore.db")
   task(:restore) do
-    setup_config
     pattern = ENV["pattern"]
     if pattern.present?
-      file = nil
-      cmd = nil
       backup_dir = backup_directory
       puts("Backup dir: #{backup_dir}")
       files = Dir.glob("#{backup_dir}/**/*#{pattern}*")
@@ -134,15 +164,16 @@ namespace(:db) do
             --dbname=#{db_config["database"]} \
             #{file}
         HEREDOC
-        unless cmd.nil?
+        with_force do
           Rake::Task["db:drop"].invoke
           Rake::Task["db:create"].invoke
-          puts(cmd)
-          system(cmd)
-          puts("")
-          puts("Restored from file: #{file} to database #{db_config["database"]}")
-          puts("")
         end
+
+        puts(cmd)
+        system(cmd)
+        puts("")
+        puts("Restored from file: #{file} to database #{db_config["database"]}")
+        puts("")
       else
         puts("Too many files match the pattern '#{pattern}':")
         puts(" " + files.join("\n "))
@@ -153,12 +184,46 @@ namespace(:db) do
     end
   end
 
-  def setup_config
-    db_config = YAML.load_file(Pathname("~/.config/tp-ruby-cli-example/database.yml").expand_path)
-    db_config_admin = db_config.merge({"database" => "postgres", "schema_search_path" => "public"})
+  # The application database config, read from the same XDG-located file the
+  # CLI manages (Example.config.database_config). Memoized so each task resolves
+  # it once.
+  def db_config
+    @db_config ||= begin
+      path = Example.config.database_config.global
+      abort("No database config at #{path}. Run `rake db:config_create` first.") unless File.exist?(path)
+      YAML.load_file(path.to_s)
+    end
   end
 
-  def backup_directory(suffix = nil, create: false)
+  # Admin connection used to create/drop the database: same config but pointed at
+  # the "postgres" maintenance database with a public schema search path.
+  def db_config_admin
+    @db_config_admin ||= db_config.merge("database" => "postgres", "schema_search_path" => "public")
+  end
+
+  # Run a block with FORCE set so nested destructive tasks (e.g. db:drop) skip
+  # their confirmation prompt. Restores the previous value afterward so it does
+  # not leak to other tasks in the same rake run.
+  def with_force
+    previous = ENV["FORCE"]
+    ENV["FORCE"] = "1"
+    yield
+  ensure
+    ENV["FORCE"] = previous
+  end
+
+  # Ask for interactive confirmation before a destructive action. Returns true
+  # only on an explicit "y"/"yes" or when FORCE is set. A non-interactive run
+  # (EOF/no TTY) returns false, so we never destroy data without a clear yes.
+  def confirm?(prompt)
+    return true if ENV["FORCE"]
+
+    $stderr.print("#{prompt} [y/N]: ")
+    answer = $stdin.gets
+    !!answer&.strip&.downcase&.start_with?("y")
+  end
+
+  def backup_directory(create: false)
     backup_dir = Pathname(__dir__).join("../../db/backups").expand_path
 
     if create and !Dir.exist?(backup_dir)
