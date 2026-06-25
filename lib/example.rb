@@ -56,11 +56,6 @@ module Example
       def call(**options)
         @config = options
       end
-
-      def die(message)
-        @logger.info(message)
-        exit(1)
-      end
     end
 
     register "version", Version
