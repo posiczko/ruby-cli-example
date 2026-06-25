@@ -1,5 +1,3 @@
-# for String#parameterize
-require "active_support/core_ext/string/inflections"
 require "dry/monads"
 require "fileutils"
 
@@ -28,18 +26,19 @@ class Example::Services::DbInitializer
 
   def create_database_config
     logger.info("Creating database config file.")
-    database_config_file = @config[:xdg_database_config].global
-    database_config_dir = File.dirname(@config[:xdg_database_config].global)
+    database_config_file = Example.config.database_config.global
+    database_config_dir = File.dirname(Example.config.database_config.global)
     logger.debug("Checking if database_config_dir #{database_config_dir} exists.")
     FileUtils.mkdir_p(database_config_dir) unless File.directory?(database_config_dir)
 
-    yaml_config = <<~YAML
-      adapter: "postgresql"
-      host: "127.0.0.1"
-      pool: 20
-      encoding: "utf-8"
-      database: "#{@config[:module_name].parameterize(separator: "_")}"
-    YAML
+    db = Example.config.database
+    yaml_config = {
+      "adapter" => db.adapter,
+      "host" => db.host,
+      "pool" => db.pool,
+      "encoding" => db.encoding,
+      "database" => db.name
+    }.to_yaml
 
     logger.debug("yaml_config: #{yaml_config.gsub("\n", ", ")}")
     logger.info("Wrote the config file in #{database_config_file}.")
@@ -51,7 +50,7 @@ class Example::Services::DbInitializer
   end
 
   def create_database
-    database_config_file = @config[:xdg_database_config].global.to_s
+    database_config_file = Example.config.database_config.global.to_s
     logger.debug("Connecting to the database using #{database_config_file}")
     database_config = YAML.load_file(database_config_file)
     ActiveRecord::Base.establish_connection(database_config.merge("database" => "postgres"))
@@ -70,7 +69,7 @@ class Example::Services::DbInitializer
   def migrate_database
     yield Example::DB::Connection.call(@config)
 
-    migrator = ActiveRecord::MigrationContext.new([@config[:root_path], "example/db/migrations"])
+    migrator = ActiveRecord::MigrationContext.new([Example.config.root_dir, "example/db/migrations"])
     migrator.migrate
 
     Success("Database migration done")

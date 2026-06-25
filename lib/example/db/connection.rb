@@ -15,7 +15,7 @@ class Example::DB::Connection
   end
 
   def call
-    database_config_file = @config[:xdg_database_config].global.to_s
+    database_config_file = Example.config.database_config.global.to_s
     logger.debug("Connecting to the database using #{database_config_file}")
     database_config = YAML.load_file(database_config_file)
     ActiveRecord::Base.establish_connection(database_config)

@@ -47,6 +47,7 @@ Gem::Specification.new do |spec|
   spec.add_dependency("activesupport", "~> 8.1")
   spec.add_dependency("dry-cli", "~> 1.1")
   spec.add_dependency("dry-logger", "~> 1.2.2")
+  spec.add_dependency("dry-configurable", "~> 1.10")
   spec.add_dependency("dry-monads", "~> 1.10")
   spec.add_dependency("pg", "~> 1.6.3")
   spec.add_dependency("runcom")
