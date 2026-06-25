@@ -67,6 +67,7 @@ module Example
 end
 
 Example.configure do |config|
+  config.module_name = "Example".downcase
   config.gem_name = GEM_SPEC.name
   config.gem_version = GEM_SPEC.version
   config.root_dir = ROOT_DIR

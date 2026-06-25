@@ -69,7 +69,8 @@ class Example::Services::DbInitializer
   def migrate_database
     yield Example::DB::Connection.call(@config)
 
-    migrator = ActiveRecord::MigrationContext.new([Example.config.root_dir, "example/db/migrations"])
+    migrations_path = Example.config.root_dir.join("example/db/migrations").to_s
+    migrator = ActiveRecord::MigrationContext.new(migrations_path)
     migrator.migrate
 
     Success("Database migration done")
