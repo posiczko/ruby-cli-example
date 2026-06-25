@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-$LOAD_PATH.unshift File.expand_path("../lib", __dir__)
-require "ruby/cli/example"
+$LOAD_PATH.unshift(File.expand_path("../lib", __dir__))
+require "example"
 
 require "minitest/autorun"

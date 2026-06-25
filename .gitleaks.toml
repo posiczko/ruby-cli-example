@@ -1,0 +1,16 @@
+title = "gitleaks config — example gem"
+
+# Start from gitleaks' built-in ruleset, then layer project allowlists on top.
+[extend]
+useDefault = true
+
+[allowlist]
+description = """
+Local development PostgreSQL config. The CLI generates a hardcoded config
+(adapter/host 127.0.0.1/db name) with no password, and the db:* rake tasks
+read config/database.yml — neither holds real secrets.
+"""
+paths = [
+  '''config/database\.yml''',
+  '''lib/example/services/db_initializer\.rb''',
+]

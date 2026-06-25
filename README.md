@@ -1,35 +1,79 @@
-# Ruby::Cli::Example
+# Example
 
-TODO: Delete this and the text below, and describe your gem
+A small command-line tool, packaged as a Ruby gem, that manages a PostgreSQL
+database using ActiveRecord. It is built on [`dry-cli`](https://dry-rb.org/gems/dry-cli/)
+for command dispatch, [`dry-monads`](https://dry-rb.org/gems/dry-monads/) for
+result handling, and [Zeitwerk](https://github.com/fxn/zeitwerk) for autoloading.
 
-Welcome to your new gem! In this directory, you'll find the files you need to be able to package up your Ruby library into a gem. Put your Ruby code in the file `lib/ruby/cli/example`. To experiment with that code, run `bin/console` for an interactive prompt.
+Requires Ruby >= 4.0.5 and a reachable PostgreSQL server.
 
 ## Installation
 
-TODO: Replace `UPDATE_WITH_YOUR_GEM_NAME_IMMEDIATELY_AFTER_RELEASE_TO_RUBYGEMS_ORG` with your gem name right after releasing it to RubyGems.org. Please do not do it earlier due to security reasons. Alternatively, replace this section with instructions to install your gem from git if you don't plan to release to RubyGems.org.
-
-Install the gem and add to the application's Gemfile by executing:
+This gem is not published to RubyGems. Install it from a checkout:
 
 ```bash
-bundle add UPDATE_WITH_YOUR_GEM_NAME_IMMEDIATELY_AFTER_RELEASE_TO_RUBYGEMS_ORG
-```
-
-If bundler is not being used to manage dependencies, install the gem by executing:
-
-```bash
-gem install UPDATE_WITH_YOUR_GEM_NAME_IMMEDIATELY_AFTER_RELEASE_TO_RUBYGEMS_ORG
+git clone https://github.com/posiczko/test
+cd test
+bin/setup        # bundle install
 ```
 
 ## Usage
 
-TODO: Write usage instructions here
+The executable is `exe/example`:
+
+```bash
+exe/example version                       # print the gem version
+exe/example db initialize                 # write the db config, create the database, run migrations
+exe/example db initialize --overwrite     # drop and recreate the database first
+```
+
+Global options:
+
+- `--debug` — enable debug-level logging (available on every command).
+
+The `db initialize` command writes a PostgreSQL configuration to an
+XDG-located `database.yml` (resolved via [`runcom`](https://github.com/bkuhlmann/runcom),
+e.g. `~/.config/example/database.yml`), creates the database, and runs the
+migrations found under `lib/example/db/migrations`.
 
 ## Development
 
-After checking out the repo, run `bin/setup` to install dependencies. Then, run `rake test` to run the tests. You can also run `bin/console` for an interactive prompt that will allow you to experiment.
+After checking out the repo, run `bin/setup` to install dependencies. Common
+tasks (see `Rakefile` and `lib/tasks/`):
 
-To install this gem onto your local machine, run `bundle exec rake install`. To release a new version, update the version number in `version.rb`, and then run `bundle exec rake release`, which will create a git tag for the version, push git commits and the created tag, and push the `.gem` file to [rubygems.org](https://rubygems.org).
+```bash
+rake                       # default: test + lint + types
+rake test                  # run the Minitest suite
+rake lint                  # check formatting with rubyfmt
+rake lint:all:autocorrect  # auto-format with rubyfmt
+rake types                 # validate RBS sigs and type-check with Steep
+rake security:audit        # bundler-audit dependency scan
+bin/console                # IRB session with the gem loaded
+```
 
-## Contributing
+To run a single test:
 
-Bug reports and pull requests are welcome on GitHub at https://github.com/[USERNAME]/ruby-cli-example.
+```bash
+ruby -Ilib -Itest test/ruby/cli/test_example.rb           # one file
+ruby -Ilib -Itest test/ruby/cli/test_example.rb -n NAME   # one test
+```
+
+Code is formatted with [rubyfmt](https://github.com/fables-tales/rubyfmt) and
+type-checked with [Steep](https://github.com/soutaro/steep) against RBS
+signatures in `sig/`. A [pre-commit](https://pre-commit.com/) configuration
+(`.pre-commit-config.yaml`) runs rubyfmt and the security audit.
+
+### Database rake tasks
+
+In addition to the CLI, `lib/tasks/db/` provides Rails-style database tasks that
+read `config/database.yml`:
+
+```bash
+rake db:create     rake db:migrate    rake db:drop      rake db:reset
+rake db:rollback   rake db:schema     rake db:dump      rake db:restore pattern=...
+rake db:seed:all   rake db:generate:migration NAME
+```
+
+## License
+
+Released under the [MIT License](https://opensource.org/licenses/MIT).

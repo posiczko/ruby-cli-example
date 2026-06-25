@@ -1,0 +1,27 @@
+repos:
+  - repo: local
+    hooks:
+      - id: security-audit
+        name: Security Audit
+        entry: bundle exec rake security:audit
+        language: system
+        pass_filenames: false
+        files: ^Gemfile\.lock$
+        stages: [pre-commit]
+
+      - id: gitleaks
+        name: Gitleaks
+        entry: gitleaks protect --staged --redact --config .gitleaks.toml
+        language: system
+        pass_filenames: false
+        stages: [pre-commit]
+
+      - id: rubyfmt
+        name: Rubyfmt
+        entry: rubyfmt --check
+        language: system
+        types_or: [ruby]
+        # rubyfmt only honors .rubyfmtignore when walking a directory, not when
+        # given explicit file paths (which prek passes), so exclude here too.
+        exclude: (^db/|\.rake$|Rakefile|vendor/|\.git/|\.rubyfmtignore)
+        stages: [pre-commit]
