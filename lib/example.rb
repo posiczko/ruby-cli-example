@@ -67,7 +67,9 @@ module Example
 end
 
 Example.configure do |config|
-  config.module_name = "Example".downcase
+  # The lib subdirectory holding this gem's code, derived from this file rather
+  # than hardcoded so it survives a rename (see bin/rename-project).
+  config.module_name = File.basename(__FILE__, ".rb")
   config.gem_name = GEM_SPEC.name
   config.gem_version = GEM_SPEC.version
   config.root_dir = ROOT_DIR

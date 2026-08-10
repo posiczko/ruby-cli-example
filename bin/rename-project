@@ -1,0 +1,259 @@
+#!/usr/bin/env ruby
+
+require "fileutils"
+require "find"
+require "optparse"
+require "pathname"
+
+# Renames this project away from its `example` placeholder name.
+#
+# Two things are rewritten:
+#
+# * file and directory names containing `example`, and
+# * file contents, where `example` becomes the new name and every module or
+#   class carrying `Example` becomes the new constant.
+#
+# `example` is matched as a whole identifier and `Example` as a CamelCase
+# segment, so `test_example.rb` and `TestExample` are both renamed while the
+# word `examples` in prose is left alone. Dash-separated contexts take a dashed
+# name — the executable becomes `exe/my-test` and the gem becomes
+# `ruby-cli-my-test` — while everything else stays underscored. Vendored,
+# generated and VCS-internal trees are never touched, and neither is this
+# script (it holds the placeholder name as data).
+#
+# @example Rename the project to `my_test`
+#   bin/rename-project my_test
+#
+# @example Preview every change without writing anything
+#   bin/rename-project --dry-run my_test
+class ProjectRenamer
+  # Lowercase words joined by single underscores, e.g. `test`, `my_test`.
+  NAME_PATTERN = /\A[a-z]+(_[a-z]+)*\z/
+
+  OLD_NAME = "example"
+  OLD_CONSTANT = "Example"
+
+  # Gem executables are dash-separated by convention, so `exe/example` becomes
+  # `exe/my-test` while the library it loads stays `lib/my_test`.
+  EXECUTABLE_DIR = "exe"
+
+  # Vendored, generated or VCS-internal directories: pruned from the walk.
+  PRUNED_DIRS = %w[
+    .bundle
+    .git
+    .idea
+    .yardoc
+    _yardoc
+    coverage
+    doc
+    log
+    node_modules
+    pkg
+    tmp
+    vendor
+  ].freeze
+
+  # `bundle gem` scaffolds `# spec.add_dependency "example-gem"` into the
+  # gemspec as a stand-in for some third-party gem: it never named this project,
+  # so it is left alone.
+  SCAFFOLDING_SUFFIX = "-gem"
+
+  # For the lowercase name, underscores and dashes count as boundaries (so
+  # `test_example.rb` and `ruby-cli-example` match) while letters and digits do
+  # not (so the word `examples` in prose is left alone).
+  NAME_OCCURRENCE = /(?<![A-Za-z0-9])#{OLD_NAME}(?!#{SCAFFOLDING_SUFFIX})(?![A-Za-z0-9])/
+
+  # The constant is also matched as a CamelCase segment, so `TestExample`
+  # becomes `TestMyTest`; a longer word such as `Exampleish` still won't match.
+  CONSTANT_OCCURRENCE = /#{OLD_CONSTANT}(?![a-z0-9])/
+
+  # Contexts naming the gem or the command, rather than a Ruby path, take the
+  # dashed name: executable references (`exe/example`), the gem name itself
+  # (`ruby-cli-example` in the gemspec and, so the two keep agreeing, in
+  # `Gemfile.lock`), and the bare word in prose (the gemspec summary). A
+  # quoted `require "example"` is deliberately not bare, so it stays
+  # underscored.
+  DASHED_OCCURRENCE = Regexp.union(
+    %r{(?<=#{EXECUTABLE_DIR}/|-)#{OLD_NAME}(?![A-Za-z0-9])},
+    /(?<=[[:space:]])#{OLD_NAME}(?=[[:space:]])/
+  )
+
+  # @param root [Pathname, String] the project root to rewrite
+  # @param new_name [String] the replacement for `example`, e.g. `my_test`
+  # @param dry_run [Boolean] when true, report changes without applying them
+  def initialize(root:, new_name:, dry_run: false)
+    @root = Pathname.new(root).expand_path
+    @new_name = new_name
+    @dashed_name = new_name.tr("_", "-")
+    @constant = camelize(new_name)
+    @dry_run = dry_run
+    @script = Pathname.new(__FILE__).expand_path
+  end
+
+  # Rewrites contents first, then renames paths depth-first, so no path
+  # collected up front goes stale mid-run. Finding nothing at all means the
+  # project has already been renamed, which is worth warning about — neither
+  # step writes anything in that case, so bailing out here leaves no mess.
+  #
+  # @return [void]
+  def call
+    paths = collect_paths
+    rewritten = rewrite_contents(paths.select(&:file?))
+    renamed = rename_paths(paths)
+
+    if rewritten.empty? && renamed.empty?
+      warn("no `#{OLD_NAME}` or `#{OLD_CONSTANT}` found under #{@root}: this project has already been renamed")
+      exit(1)
+    else
+      report(rewritten, renamed)
+    end
+  end
+
+  private
+
+  # @param name [String] an underscored name, e.g. `my_test`
+  # @return [String] the matching Ruby constant, e.g. `MyTest`
+  def camelize(name)
+    name.split("_").map(&:capitalize).join
+  end
+
+  # @return [Array<Pathname>] every file and directory under the root, minus
+  #   pruned trees and symlinks
+  def collect_paths
+    paths = []
+
+    Find.find(@root.to_s) do |entry|
+      path = Pathname.new(entry)
+
+      if path == @root
+        next
+      elsif path.symlink? || (path.directory? && PRUNED_DIRS.include?(path.basename.to_s))
+        Find.prune
+      else
+        paths << path
+      end
+    end
+
+    paths
+  end
+
+  # @param files [Array<Pathname>]
+  # @return [Array<Pathname>] the files whose contents changed
+  def rewrite_contents(files)
+    files
+      .reject { |file| file == @script }
+      .select { |file| rewrite(file) }
+  end
+
+  # @param file [Pathname]
+  # @return [Boolean] whether the file mentioned the old name
+  def rewrite(file)
+    content = read_text(file)
+
+    if content.nil?
+      false
+    else
+      updated = content
+        .gsub(CONSTANT_OCCURRENCE, @constant)
+        .gsub(DASHED_OCCURRENCE, @dashed_name)
+        .gsub(NAME_OCCURRENCE, @new_name)
+
+      if updated == content
+        false
+      else
+        file.write(updated) unless @dry_run
+        true
+      end
+    end
+  end
+
+  # @param file [Pathname]
+  # @return [String, nil] the file's text, or nil when it is binary or unreadable
+  def read_text(file)
+    content = file.read(encoding: "UTF-8")
+
+    if content.valid_encoding? && !content.include?("\0")
+      content
+    else
+      nil
+    end
+
+  rescue SystemCallError => error
+    warn("skipping #{relative(file)}: #{error.message}")
+    nil
+  end
+
+  # Deepest paths move first, so renaming a directory never invalidates the
+  # already-collected paths of its children.
+  #
+  # @param paths [Array<Pathname>]
+  # @return [Array<Array(Pathname, Pathname)>] the `[from, to]` pairs that moved
+  def rename_paths(paths)
+    paths
+      .select { |path| path.basename.to_s.match?(NAME_OCCURRENCE) }
+      .sort_by { |path| -path.to_s.count(File::SEPARATOR) }
+      .map { |path| rename(path) }
+  end
+
+  # @param path [Pathname]
+  # @return [Array(Pathname, Pathname)] the `[from, to]` pair
+  def rename(path)
+    replacement = executable?(path) ? @dashed_name : @new_name
+    target = path.dirname.join(path.basename.to_s.gsub(NAME_OCCURRENCE, replacement))
+
+    abort("refusing to overwrite existing #{relative(target)}") if target.exist?
+
+    FileUtils.mv(path.to_s, target.to_s) unless @dry_run
+
+    [path, target]
+  end
+
+  # @param rewritten [Array<Pathname>]
+  # @param renamed [Array<Array(Pathname, Pathname)>]
+  # @return [void]
+  def report(rewritten, renamed)
+    rewritten.each { |file| puts("#{@dry_run ? "would rewrite" : "rewrote"} #{relative(file)}") }
+    renamed.each { |from, to| puts("#{@dry_run ? "would rename" : "renamed"} #{relative(from)} -> #{relative(to)}") }
+
+    puts("#{rewritten.size} files rewritten, #{renamed.size} paths renamed#{@dry_run ? " (dry run)" : ""}")
+  end
+
+  # @param path [Pathname]
+  # @return [Boolean] whether the path is a gem executable
+  def executable?(path)
+    path.dirname == @root.join(EXECUTABLE_DIR)
+  end
+
+  # @param path [Pathname]
+  # @return [String] the path relative to the project root
+  def relative(path)
+    path.relative_path_from(@root).to_s
+  end
+end
+
+dry_run = false
+
+parser = OptionParser.new do |opts|
+  opts.banner = "Usage: #{File.basename($PROGRAM_NAME)} [options] NEW_NAME"
+  opts.on("-n", "--dry-run", "Report every change without writing anything") { dry_run = true }
+  opts.on("-h", "--help", "Show this message") {
+    puts(opts)
+    exit
+  }
+end
+
+parser.parse!
+
+new_name = ARGV.shift.to_s
+
+abort(parser.help) if new_name.empty? || !ARGV.empty?
+
+unless ProjectRenamer::NAME_PATTERN.match?(new_name)
+  abort("invalid name #{new_name.inspect}: expected lowercase words joined by underscores, e.g. `test` or `my_test`")
+end
+
+if new_name == ProjectRenamer::OLD_NAME
+  abort("nothing to do: the project is already named #{new_name.inspect}")
+end
+
+ProjectRenamer.new(root: Pathname.new(__dir__).parent, new_name: new_name, dry_run: dry_run).call
