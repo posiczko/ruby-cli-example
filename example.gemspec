@@ -14,7 +14,7 @@ Gem::Specification.new do |spec|
   DESC
   spec.homepage = "https://github.com/posiczko/test"
   spec.license = "MIT"
-  spec.required_ruby_version = ">= 4.0.5"
+  spec.required_ruby_version = ">= 4.0.6"
   spec.metadata["allowed_push_host"] = "https://rubygems.org"
   spec.metadata["homepage_uri"] = spec.homepage
   spec.metadata["source_code_uri"] = spec.homepage
