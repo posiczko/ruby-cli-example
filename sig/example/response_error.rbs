@@ -1,0 +1,17 @@
+module Example
+  class ResponseError < Example::Error
+    @status: untyped
+
+    @headers: untyped
+
+    @body: untyped
+
+    attr_reader status: untyped
+
+    attr_reader headers: untyped
+
+    attr_reader body: untyped
+
+    def initialize: (?String? message, ?status: untyped?, ?headers: untyped?, ?body: untyped?) -> void
+  end
+end

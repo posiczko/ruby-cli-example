@@ -5,7 +5,8 @@ database using ActiveRecord. It is built on [`dry-cli`](https://dry-rb.org/gems/
 for command dispatch, [`dry-monads`](https://dry-rb.org/gems/dry-monads/) for
 result handling, and [Zeitwerk](https://github.com/fxn/zeitwerk) for autoloading.
 
-Requires Ruby >= 4.0.5 and a reachable PostgreSQL server.
+Requires Ruby >= 4.0.6 and a reachable PostgreSQL server. The interpreter is
+pinned in `.ruby-version`, which both version managers and CI read.
 
 ## Installation
 
@@ -97,7 +98,7 @@ installed by `bin/setup`.
   output but is not yet required by `test/test_helper.rb`.
 - `rbs` and `steep` — the signatures in `sig/` and the `rake types` checks.
 - `bundler-audit` — the dependency vulnerability scan behind
-  `rake security:audit`. `brakeman` is declared but no task invokes it.
+  `rake security:audit`, which also runs as its own CI job.
 - `amazing_print` and `debug` — the `:tools` group, loaded into `bin/console`
   for pretty-printing and breakpoints.
 
@@ -128,8 +129,8 @@ bin/console                # IRB session with the gem loaded
 To run a single test:
 
 ```bash
-ruby -Ilib -Itest test/ruby/cli/test_example.rb           # one file
-ruby -Ilib -Itest test/ruby/cli/test_example.rb -n NAME   # one test
+ruby -Ilib -Itest test/test_example.rb           # one file
+ruby -Ilib -Itest test/test_example.rb -n NAME   # one test
 ```
 
 Code is formatted with [rubyfmt](https://github.com/fables-tales/rubyfmt) and

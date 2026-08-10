@@ -1,0 +1,18 @@
+# Minimal Zeitwerk signatures: the loader surface used to boot the gem.
+module Zeitwerk
+  interface _Inflector
+    def inflect: (Hash[String, String] overrides) -> void
+  end
+
+  class Loader
+    def self.for_gem: (?warn_on_extra_files: bool) -> Loader
+
+    def inflector: () -> _Inflector
+
+    def tag=: (String value) -> String
+
+    def push_dir: (String | untyped dir, ?namespace: Module) -> void
+
+    def setup: () -> void
+  end
+end

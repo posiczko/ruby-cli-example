@@ -1,0 +1,30 @@
+# The `lib/` directory, and the gemspec loaded at boot. Both are defined in
+# lib/example.rb and read across the codebase.
+ROOT_DIR: Pathname
+GEM_SPEC: Gem::Specification
+
+# The gem's root namespace.
+#
+# `config` is deliberately untyped: its readers (`gem_name`, `root_dir`,
+# `database.adapter`, …) are generated at runtime by dry-configurable from the
+# `setting` declarations in lib/example.rb, and RBS has no way to describe a
+# schema built that way. Adding a setting therefore needs no change here.
+module Example
+  extend Dry::Configurable
+
+  module CLI
+    extend Dry::CLI::Registry
+
+    # Shared base for every command: declares `--debug` and captures the parsed
+    # options into `@config` for subcommands to build on.
+    class Base < Dry::CLI::Command
+      include Example::Loggable
+
+      @config: Hash[Symbol, untyped]
+
+      attr_reader config: Hash[Symbol, untyped]
+
+      def call: (**untyped options) -> void
+    end
+  end
+end

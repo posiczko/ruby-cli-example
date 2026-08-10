@@ -11,6 +11,11 @@ Zeitwerk::Loader.for_gem.then do |loader|
   loader.inflector.inflect("cli" => "CLI")
   loader.tag = File.basename(__FILE__, ".rb")
   loader.push_dir(__dir__)
+  # ActiveRecord models are top-level by convention (`Employee`, not
+  # `Example::DB::Models::Employee`). Making their directory a second root
+  # strips the namespace from their paths, so Zeitwerk expects — and
+  # eager-loads — the constants the models actually define.
+  loader.push_dir(File.join(__dir__.to_s, "example/db/models"))
   loader.setup
 end
 
@@ -23,6 +28,8 @@ module Example
 
   setting :gem_name, default: "example"
   setting :gem_version, default: "0.0.0"
+  # The lib subdirectory holding this gem's code; migration paths hang off it.
+  setting :module_name, default: "example"
   setting :root_dir, constructor: -> (value) { Pathname(value) }
   setting :database_config, constructor: -> (name) { Runcom::Config.new("#{name}/database.yml") }
 
@@ -39,7 +46,7 @@ require "example/services"
 require "example/db/connection"
 require "example/db/models"
 
-ROOT_DIR = Pathname.new(__dir__).expand_path unless defined?(ROOT_DIR)
+ROOT_DIR = Pathname.new(__dir__.to_s).expand_path unless defined?(ROOT_DIR)
 GEM_SPEC = Gem::Specification.load("example.gemspec")
 
 module Example

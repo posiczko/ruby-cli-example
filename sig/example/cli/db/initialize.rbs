@@ -1,0 +1,11 @@
+module Example
+  module CLI
+    module DB
+      class Initialize < Example::CLI::Base
+        include Example::Loggable
+
+        def call: (**untyped options) -> void
+      end
+    end
+  end
+end

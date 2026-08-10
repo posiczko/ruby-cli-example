@@ -15,6 +15,12 @@ target :lib do
   library "openssl"
   library "resolv"
   library "zlib"
+  library "pathname"
+  library "logger"
+  library "fileutils"
+  library "yaml"
+  # Supplies Object#to_yaml, which DbInitializer uses to write database.yml.
+  library "psych"
 
   # Empty hash/array literals would force every internal variable initialization
   # to carry an inline RBS annotation comment. Silence — they're advisory.

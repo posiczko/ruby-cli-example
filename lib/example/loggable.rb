@@ -9,15 +9,17 @@ module Example
     class << self
       def logger(config)
         level = (config and config[:debug]) ? Logger::DEBUG : Logger::INFO
+        memoized = @logger
 
         # Rebuild only when the level changes. Memoizing unconditionally would
         # freeze in the first caller's level (and the formatter's captured
         # level), so a later --debug run would be ignored.
-        if @logger.nil? || @logger.level != level
-          @logger = Logger.new($stdout, formatter: formatter(level), level: level)
+        if memoized.nil? || memoized.level != level
+          memoized = Logger.new($stdout, formatter: formatter(level), level: level)
+          @logger = memoized
         end
 
-        @logger
+        memoized
       end
 
       attr_writer :config
@@ -31,10 +33,11 @@ module Example
           date_format = datetime.strftime("%Y-%m-%d %H:%M:%S.%L")
           extra_logging = ""
           if level == Logger::DEBUG
-            # Adjust the '4' as needed based on your call stack
-            location = caller_locations(4, 1).first
-            method_name = location.label
-            extra_logging = " -- #{method_name}"
+            # Adjust the '4' as needed based on your call stack. A stack
+            # shallower than that yields no location, so annotate only when
+            # one is actually found.
+            location = caller_locations(4, 1)&.first
+            extra_logging = " -- #{location.label}" if location
           end
 
           short_severity = case severity

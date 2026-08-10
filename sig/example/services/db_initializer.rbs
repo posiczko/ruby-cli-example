@@ -1,0 +1,35 @@
+module Example
+  module Services
+    # Chains config creation, database creation and migration, short-circuiting
+    # on the first failure via dry-monads `do` notation.
+    #
+    # Results are `untyped` because dry-monads ships no signatures: `Success`
+    # and `Failure` are mixed in by `include Dry::Monads[:result, :do]`, a call
+    # RBS cannot follow, so they are declared here instead.
+    class DbInitializer
+      include Example::Loggable
+
+      @config: untyped
+
+      def self.call: (untyped config) -> untyped
+
+      def initialize: (untyped config) -> void
+
+      # The block is what `do` notation supplies at runtime; `yield` unwraps a
+      # Success or aborts the chain with the Failure.
+      def call: () ?{ (untyped result) -> untyped } -> untyped
+
+      private
+
+      def create_database_config: () -> untyped
+
+      def create_database: () -> untyped
+
+      def migrate_database: () ?{ (untyped result) -> untyped } -> untyped
+
+      def Success: (untyped value) -> untyped
+
+      def Failure: (untyped value) -> untyped
+    end
+  end
+end

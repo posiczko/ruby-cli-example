@@ -1,0 +1,50 @@
+# Minimal signatures for the dry-rb gems, which ship none of their own.
+#
+# Only the surface this gem actually touches is declared. Everything that
+# crosses back into dry-rb's own runtime metaprogramming — the settings object
+# built from `setting` declarations, the result monads — stays `untyped`
+# rather than pretending to a precision RBS cannot enforce here.
+module Dry
+  # `extend Dry::Configurable` adds these to a module's singleton.
+  module Configurable
+    def setting: (Symbol name, ?default: untyped, ?constructor: untyped) ?{ () -> void } -> void
+
+    def config: () -> untyped
+
+    def configure: () { (untyped config) -> void } -> void
+  end
+
+  # `include Dry::Monads[:result, :do]` is a call, not a constant reference, so
+  # RBS cannot model what it mixes in. Classes that use it declare `Success`
+  # and `Failure` themselves.
+  module Monads
+    def self.[]: (*Symbol features) -> Module
+  end
+
+  class CLI
+    def initialize: (untyped registry) -> void
+
+    def call: (?arguments: Array[String], ?out: untyped, ?err: untyped) -> void
+
+    # `extend Dry::CLI::Registry` makes a module a command registry.
+    module Registry
+      def register: (String name, ?untyped command, **untyped options) ?{ (untyped prefix) -> void } -> void
+
+      def before: (String name, untyped callback) -> void
+
+      def after: (String name, untyped callback) -> void
+    end
+
+    class Command
+      def self.option: (Symbol name, **untyped options) -> void
+
+      def self.argument: (Symbol name, **untyped options) -> void
+
+      def self.desc: (String description) -> void
+
+      def self.example: (*String examples) -> void
+
+      def call: (**untyped options) -> void
+    end
+  end
+end

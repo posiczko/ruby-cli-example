@@ -1,0 +1,16 @@
+# Minimal ActiveRecord signatures: only what this gem calls. The connection
+# object exposes adapter-specific DDL (`create_database`, `drop_database`), so
+# it stays `untyped`.
+module ActiveRecord
+  class Base
+    def self.establish_connection: (untyped config) -> untyped
+
+    def self.connection: () -> untyped
+  end
+
+  class MigrationContext
+    def initialize: (String migrations_path, ?untyped schema_migration) -> void
+
+    def migrate: (?Integer? target_version) -> untyped
+  end
+end

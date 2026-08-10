@@ -13,11 +13,7 @@ permissions:
 jobs:
   build:
     runs-on: ubuntu-latest
-    name: Ruby ${{ matrix.ruby }}
-    strategy:
-      matrix:
-        ruby:
-          - '4.0.5'
+    name: Build
 
     steps:
       - uses: actions/checkout@v6
@@ -26,7 +22,37 @@ jobs:
       - name: Set up Ruby
         uses: ruby/setup-ruby@v1
         with:
-          ruby-version: ${{ matrix.ruby }}
+          ruby-version: .ruby-version
           bundler-cache: true
       - name: Run the default task
         run: bundle exec rake
+
+  security:
+    runs-on: ubuntu-latest
+    name: Security audit
+
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: .ruby-version
+          bundler-cache: true
+      # gitleaks is a standalone binary, not a gem, so `rake security:secrets`
+      # needs it installed before the audit can shell out to it. Pinned by
+      # digest as well as version, so a re-tagged release cannot change what
+      # runs here; update both together from the release's checksums.txt.
+      - name: Install gitleaks
+        env:
+          GITLEAKS_VERSION: 8.30.1
+          GITLEAKS_SHA256: 551f6fc83ea457d62a0d98237cbad105af8d557003051f41f3e7ca7b3f2470eb
+        run: |
+          curl -sSfLo gitleaks.tar.gz \
+            "https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}/gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz"
+          echo "${GITLEAKS_SHA256}  gitleaks.tar.gz" | sha256sum --check --strict -
+          sudo tar -xzf gitleaks.tar.gz -C /usr/local/bin gitleaks
+          rm gitleaks.tar.gz
+      - name: Run the security audit
+        run: bundle exec rake security:audit

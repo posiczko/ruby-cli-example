@@ -1,0 +1,9 @@
+# Minimal Runcom signatures. `Runcom::Config` resolves an XDG path; `global`
+# is the resolved Pathname for the config file this gem writes and reads.
+module Runcom
+  class Config
+    def initialize: (String relative_path, **untyped options) -> void
+
+    def global: () -> Pathname
+  end
+end

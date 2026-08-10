@@ -1,0 +1,4 @@
+module Example
+  class Error < StandardError
+  end
+end

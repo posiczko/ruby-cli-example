@@ -1,0 +1,7 @@
+module Example
+  module CLI
+    class Version < Example::CLI::Base
+      def call: (**untyped options) -> void
+    end
+  end
+end

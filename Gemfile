@@ -17,7 +17,6 @@ group :test do
 end
 
 group :security do
-  gem "brakeman"
   gem "bundler-audit"
 end
 

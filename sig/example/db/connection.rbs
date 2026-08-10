@@ -1,0 +1,21 @@
+module Example
+  module DB
+    # Establishes the ActiveRecord connection from the XDG-located
+    # database.yml. See DbInitializer for why the monadic result is untyped.
+    class Connection
+      include Example::Loggable
+
+      @config: untyped
+
+      def self.call: (untyped config) -> untyped
+
+      def initialize: (untyped config) -> void
+
+      def call: () -> untyped
+
+      def Success: (untyped value) -> untyped
+
+      def Failure: (untyped value) -> untyped
+    end
+  end
+end

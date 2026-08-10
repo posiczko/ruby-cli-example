@@ -1,0 +1,3 @@
+# Top-level, not under Example::DB::Models, matching lib/example/db/models/employee.rb.
+class Employee < ActiveRecord::Base
+end

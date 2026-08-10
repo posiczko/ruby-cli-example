@@ -1,0 +1,27 @@
+module Example
+  # Mixin giving including classes a level-aware stdlib Logger. The self type
+  # is `Object` because `die` calls `exit`, and because every including class
+  # supplies the `@config` this reads.
+  module Loggable : Object
+    @config: untyped
+
+    self.@logger: Logger?
+
+    self.@config: untyped
+
+    # Memoized per level: a later `--debug` invocation rebuilds the logger
+    # rather than reusing one pinned to the first caller's level.
+    def self.logger: (untyped config) -> Logger
+
+    def self.config=: (untyped value) -> untyped
+
+    def self.logger=: (Logger? value) -> Logger?
+
+    # Returns the formatter proc Logger#formatter= expects.
+    def self.formatter: (Integer level) -> untyped
+
+    def logger: () -> Logger
+
+    def die: (String message) -> bot
+  end
+end

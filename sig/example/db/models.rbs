@@ -1,0 +1,6 @@
+module Example
+  module DB
+    module Models
+    end
+  end
+end
