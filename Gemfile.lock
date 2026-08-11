@@ -6,7 +6,6 @@ PATH
       activesupport (~> 8.1)
       dry-cli (~> 1.1)
       dry-configurable (~> 1.4)
-      dry-logger (~> 1.2.2)
       dry-monads (~> 1.10)
       pg (~> 1.6.3)
       runcom
@@ -62,8 +61,6 @@ GEM
       concurrent-ruby (~> 1.0)
       logger
       zeitwerk (~> 2.6)
-    dry-logger (1.2.2)
-      logger
     dry-monads (1.10.0)
       concurrent-ruby (~> 1.0)
       dry-core (~> 1.1)
@@ -199,7 +196,6 @@ CHECKSUMS
   dry-cli (1.4.1) sha256=b8015bb76c708aa8705a36faf694973e75eeeffca39b89c8e172dc6f66a7d874
   dry-configurable (1.4.0) sha256=e35d1b5f3c081753ef361f564919db79000f32cfa6f20ee3a3ba5921b41b73ce
   dry-core (1.2.0) sha256=0cc5a7da88df397f153947eeeae42e876e999c1e30900f3c536fb173854e96a1
-  dry-logger (1.2.2) sha256=eaf91bbc131135b2148d779fb22b8aff4a1b1ad616c721dab6d113beaa5e41c7
   dry-monads (1.10.0) sha256=68c90d77617c6ce88d60704fc3b233907e6320974152fe75ad947f968006ca39
   erb (6.0.7) sha256=c5ca6dc25b0ef974a44dc8f59fe847577122483b1968a38dec305c60bf91ee92
   ffi (1.17.4-arm64-darwin) sha256=19071aaf1419251b0a46852abf960e77330a3b334d13a4ab51d58b31a937001b

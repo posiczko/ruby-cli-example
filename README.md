@@ -70,37 +70,42 @@ installed by `bin/setup`.
 
 ### Runtime
 
-- `dry-cli` — command registry and option parsing; every command subclasses
-  `Example::CLI::Base`.
-- `dry-configurable` — the `Example.config` settings block (gem name and
-  version, root directory, database settings).
-- `dry-monads` — `Success`/`Failure` results with `do` notation, which is how
-  `Example::Services` short-circuits on failure.
-- `dry-logger` — declared, but not currently wired in: `Example::Loggable`
-  builds a stdlib `Logger`.
-- `zeitwerk` — autoloads `lib/example`, with the `db` → `DB` and `cli` → `CLI`
-  inflections.
-- `activerecord` — models, connection handling and migrations.
-- `activesupport` — the `underscore`/`camelize` inflections behind
+- `dry-cli` (`~> 1.1`) — command registry and option parsing; every command
+  subclasses `Example::CLI::Base`.
+- `dry-configurable` (`~> 1.4`) — the `Example.config` settings block (gem name
+  and version, root directory, database settings).
+- `dry-monads` (`~> 1.10`) — `Success`/`Failure` results with `do` notation,
+  which is how `Example::Services` short-circuits on failure.
+- `zeitwerk` (unconstrained) — autoloads `lib/example`, with the `db` → `DB` and
+  `cli` → `CLI` inflections.
+- `activerecord` (`~> 8.1`) — models, connection handling and migrations.
+- `activesupport` (`~> 8.1`) — the `underscore`/`camelize` inflections behind
   `rake db:generate:migration`.
-- `pg` — the PostgreSQL adapter ActiveRecord connects through.
-- `runcom` — resolves the XDG location of `database.yml`.
-- `psych` — the YAML implementation that config is read and written with,
-  pinned to 5.4.x in the `Gemfile`.
+- `pg` (`~> 1.6.3`) — the PostgreSQL adapter ActiveRecord connects through.
+- `runcom` (unconstrained) — resolves the XDG location of `database.yml`.
+
+`psych` (`~> 5.4.0`) — the YAML implementation that config is read and written
+with — is pinned in the `Gemfile` rather than the gemspec, since it ships with
+Ruby and only the pin matters here.
 
 ### Development
 
-- `rake` — task runner for everything under `lib/tasks/`.
+- `rake` (`~> 13.0`) — task runner for everything under `lib/tasks/`.
 - `irb` — backs `bin/console`.
 - `annotaterb` — schema annotations for models, wired up in
   `lib/tasks/annotaterb.rake`.
-- `minitest` — test framework. `minitest-reporters` is declared for richer
-  output but is not yet required by `test/test_helper.rb`.
+- `minitest` (`~> 6.0`) — test framework, driven by `Minitest::TestTask` in the
+  `Rakefile`.
+- `minitest-reporters` — richer test output; `test/test_helper.rb` selects the
+  spec reporter, which prints one line per test name and result.
 - `rbs` and `steep` — the signatures in `sig/` and the `rake types` checks.
 - `bundler-audit` — the dependency vulnerability scan behind
   `rake security:audit`, which also runs as its own CI job.
 - `amazing_print` and `debug` — the `:tools` group, loaded into `bin/console`
   for pretty-printing and breakpoints.
+
+Development gems without a constraint above are unpinned in the `Gemfile`;
+`Gemfile.lock` records what is actually resolved.
 
 ### External tools
 
