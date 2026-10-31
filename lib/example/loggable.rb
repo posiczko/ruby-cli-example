@@ -22,8 +22,7 @@ module Example
         memoized
       end
 
-      attr_writer :config
-
+      # Lets tests swap in a quiet logger; production code never assigns one.
       attr_writer :logger
 
       private
@@ -60,11 +59,6 @@ module Example
 
     def logger
       Example::Loggable.logger(@config)
-    end
-
-    def die(message)
-      logger.error(message)
-      exit(1)
     end
   end
 end

@@ -1,3 +1,5 @@
 module Example
   VERSION: String
+
+  GEM_NAME: String
 end

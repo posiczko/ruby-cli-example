@@ -1,15 +1,20 @@
-# frozen_string_literal: true
-
 require "dry/cli"
 require "dry/configurable"
 require "pathname"
 require "runcom"
+require "yaml"
 require "zeitwerk"
+
+# Loaded by hand, not by Zeitwerk: the file defines VERSION and GEM_NAME rather
+# than an Example::Version constant, and the configure block below needs both.
+# (Bundler happens to preload it through the gemspec; don't rely on that.)
+require_relative "example/version"
 
 Zeitwerk::Loader.for_gem.then do |loader|
   loader.inflector.inflect("db" => "DB")
   loader.inflector.inflect("cli" => "CLI")
   loader.tag = File.basename(__FILE__, ".rb")
+  loader.ignore("#{__dir__}/example/version.rb")
   loader.push_dir(__dir__)
   # ActiveRecord models are top-level by convention (`Employee`, not
   # `Example::DB::Models::Employee`). Making their directory a second root
@@ -40,6 +45,26 @@ module Example
     setting :encoding, default: "utf-8"
     setting :name, constructor: -> (value) { value.to_s.tr("-", "_") }
   end
+
+  # The settings written to database.yml, keyed the way ActiveRecord expects.
+  #
+  # @return [Hash{String => Object}]
+  def self.database_settings
+    db = config.database
+    {
+      "adapter" => db.adapter,
+      "host" => db.host,
+      "pool" => db.pool,
+      "encoding" => db.encoding,
+      "database" => db.name
+    }
+  end
+
+  # @return [Pathname] the XDG-located database.yml this gem reads and writes
+  def self.database_config_path = config.database_config.global
+
+  # @return [Hash{String => Object}] the settings read back from database.yml
+  def self.read_database_config = YAML.load_file(database_config_path.to_s)
 end
 
 require "example/services"
@@ -47,7 +72,6 @@ require "example/db/connection"
 require "example/db/models"
 
 ROOT_DIR = Pathname.new(__dir__.to_s).expand_path unless defined?(ROOT_DIR)
-GEM_SPEC = Gem::Specification.load("example.gemspec")
 
 module Example
   module CLI
@@ -63,11 +87,18 @@ module Example
       def call(**options)
         @config = options
       end
+
+      # Log the message at error level and exit non-zero. CLI-only: services
+      # report failures as `Failure` results and leave exiting to the command.
+      def die(message)
+        logger.error(message)
+        exit(1)
+      end
     end
 
     register "version", Version
 
-    register "db", aliases: ["g"] do |prefix|
+    register "db" do |prefix|
       prefix.register "initialize", DB::Initialize
     end
   end
@@ -77,10 +108,10 @@ Example.configure do |config|
   # The lib subdirectory holding this gem's code, derived from this file rather
   # than hardcoded so it survives a rename (see bin/rename-project).
   config.module_name = File.basename(__FILE__, ".rb")
-  config.gem_name = GEM_SPEC.name
-  config.gem_version = GEM_SPEC.version
+  config.gem_name = Example::GEM_NAME
+  config.gem_version = Example::VERSION
   config.root_dir = ROOT_DIR
   # constructor coerces -> "ruby_cli_example"
-  config.database.name = GEM_SPEC.name
-  config.database_config = GEM_SPEC.name
+  config.database.name = Example::GEM_NAME
+  config.database_config = Example::GEM_NAME
 end

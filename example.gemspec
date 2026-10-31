@@ -1,9 +1,7 @@
-# frozen_string_literal: true
-
 require_relative "lib/example/version"
 
 Gem::Specification.new do |spec|
-  spec.name = "ruby-cli-example"
+  spec.name = Example::GEM_NAME
   spec.version = Example::VERSION
   spec.authors = ["Pawel Osiczko"]
   spec.email = ["p.osiczko@tetrapyloctomy.org"]
@@ -44,13 +42,12 @@ Gem::Specification.new do |spec|
   # Uncomment to register a new dependency of your gem
   # spec.add_dependency "example-gem", "~> 1.0"
   spec.add_dependency("activerecord", "~> 8.1")
-  spec.add_dependency("activesupport", "~> 8.1")
   spec.add_dependency("dry-cli", "~> 1.1")
   spec.add_dependency("dry-configurable", "~> 1.4")
   spec.add_dependency("dry-monads", "~> 1.10")
-  spec.add_dependency("pg", "~> 1.6.3")
-  spec.add_dependency("runcom")
-  spec.add_dependency("zeitwerk")
+  spec.add_dependency("pg", "~> 1.6")
+  spec.add_dependency("runcom", "~> 13.3")
+  spec.add_dependency("zeitwerk", "~> 2.8")
   # For more information and examples about making a new gem, check out our
   # guide at: https://guides.rubygems.org/make-your-own-gem/
 end

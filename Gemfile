@@ -1,5 +1,3 @@
-# frozen_string_literal: true
-
 source "https://rubygems.org"
 
 # Specify your gem's dependencies in example.gemspec
@@ -27,7 +25,10 @@ end
 
 group :tools do
   gem "amazing_print"
+  gem "rdoc", "~> 7.0.4"
   gem "debug"
 end
 
-gem "psych", "~> 5.4.0"
+# The YAML implementation database.yml is read and written with. It ships with
+# Ruby, so the pin lives here rather than in the gemspec.
+gem "psych", "~> 5.5"

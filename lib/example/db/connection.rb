@@ -1,6 +1,5 @@
 require "active_record"
 require "dry/monads"
-require "yaml"
 
 class Example::DB::Connection
   include Dry::Monads[:result]
@@ -15,9 +14,8 @@ class Example::DB::Connection
   end
 
   def call
-    database_config_file = Example.config.database_config.global.to_s
-    logger.debug("Connecting to the database using #{database_config_file}")
-    database_config = YAML.load_file(database_config_file)
+    logger.debug("Connecting to the database using #{Example.database_config_path}")
+    database_config = Example.read_database_config
     ActiveRecord::Base.establish_connection(database_config)
     Success(database_config)
   rescue => e

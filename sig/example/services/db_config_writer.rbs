@@ -1,0 +1,21 @@
+module Example
+  module Services
+    # Writes database.yml from Example.database_settings. See DbInitializer for
+    # why the monadic result is untyped.
+    class DbConfigWriter
+      include Example::Loggable
+
+      @config: untyped
+
+      def self.call: (untyped config) -> untyped
+
+      def initialize: (untyped config) -> void
+
+      def call: () -> untyped
+
+      def Success: (untyped value) -> untyped
+
+      def Failure: (untyped value) -> untyped
+    end
+  end
+end

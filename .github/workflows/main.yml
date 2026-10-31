@@ -1,6 +1,8 @@
 name: Ruby
 
 on:
+  # Pushes are deliberately not built: `.invalid` matches no branch, so only
+  # pull requests run CI. Replace it with `main` to build pushes too.
   push:
     branches:
       - .invalid

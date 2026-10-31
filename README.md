@@ -76,13 +76,13 @@ installed by `bin/setup`.
   and version, root directory, database settings).
 - `dry-monads` (`~> 1.10`) — `Success`/`Failure` results with `do` notation,
   which is how `Example::Services` short-circuits on failure.
-- `zeitwerk` (unconstrained) — autoloads `lib/example`, with the `db` → `DB` and
+- `zeitwerk` (`~> 2.8`) — autoloads `lib/example`, with the `db` → `DB` and
   `cli` → `CLI` inflections.
-- `activerecord` (`~> 8.1`) — models, connection handling and migrations.
-- `activesupport` (`~> 8.1`) — the `underscore`/`camelize` inflections behind
+- `activerecord` (`~> 8.1`) — models, connection handling and migrations. It
+  brings in `activesupport`, whose `underscore`/`camelize` inflections drive
   `rake db:generate:migration`.
-- `pg` (`~> 1.6.3`) — the PostgreSQL adapter ActiveRecord connects through.
-- `runcom` (unconstrained) — resolves the XDG location of `database.yml`.
+- `pg` (`~> 1.6`) — the PostgreSQL adapter ActiveRecord connects through.
+- `runcom` (`~> 13.3`) — resolves the XDG location of `database.yml`.
 
 `psych` (`~> 5.4.0`) — the YAML implementation that config is read and written
 with — is pinned in the `Gemfile` rather than the gemspec, since it ships with
@@ -131,6 +131,8 @@ rake security:audit        # bundler-audit dependency scan
 bin/console                # IRB session with the gem loaded
 ```
 
+The suite needs no PostgreSQL: `test/test_helper.rb` points `XDG_CONFIG_HOME` at
+a temporary directory, so tests never read or write your real `database.yml`.
 To run a single test:
 
 ```bash
@@ -145,10 +147,12 @@ signatures in `sig/`. A [pre-commit](https://pre-commit.com/) configuration
 
 ### Database rake tasks
 
-In addition to the CLI, `lib/tasks/db/` provides Rails-style database tasks that
-read `config/database.yml`:
+In addition to the CLI, `lib/tasks/db/` provides Rails-style database tasks.
+They read the same XDG-located `database.yml` the CLI manages;
+`rake db:config_create` writes it (pass `overwrite=true` to replace one):
 
 ```bash
+rake db:config_create
 rake db:create     rake db:migrate    rake db:drop      rake db:reset
 rake db:rollback   rake db:schema     rake db:dump      rake db:restore pattern=...
 rake db:seed:all   rake db:generate:migration NAME

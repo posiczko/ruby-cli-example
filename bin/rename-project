@@ -87,7 +87,10 @@ class ProjectRenamer
     @dashed_name = new_name.tr("_", "-")
     @constant = camelize(new_name)
     @dry_run = dry_run
-    @script = Pathname.new(__FILE__).expand_path
+    # `realpath`, not `expand_path`: `root` derives from `__dir__`, which
+    # resolves symlinks, so the script path must too or it fails to match
+    # itself and rewrites its own placeholders.
+    @script = Pathname.new(__FILE__).realpath
   end
 
   # Rewrites contents first, then renames paths depth-first, so no path

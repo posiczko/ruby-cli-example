@@ -37,21 +37,12 @@ require "example"
 namespace(:db) do
   desc("Write the database config file from Example.config (overwrite=true to replace an existing one)")
   task(:config_create) do
-    path = Example.config.database_config.global
+    path = Example.database_config_path
     if File.exist?(path) && !ENV["overwrite"]
       puts("Config already exists at #{path} (pass overwrite=true to replace it).")
     else
-      db = Example.config.database
-      yaml = {
-        "adapter" => db.adapter,
-        "host" => db.host,
-        "pool" => db.pool,
-        "encoding" => db.encoding,
-        "database" => db.name
-      }.to_yaml
-      FileUtils.mkdir_p(File.dirname(path))
-      File.write(path, yaml)
-      puts("Wrote database config to #{path}")
+      result = Example::Services::DbConfigWriter.call({})
+      abort(result.failure) if result.failure?
     end
   end
 
@@ -189,9 +180,9 @@ namespace(:db) do
   # it once.
   def db_config
     @db_config ||= begin
-      path = Example.config.database_config.global
+      path = Example.database_config_path
       abort("No database config at #{path}. Run `rake db:config_create` first.") unless File.exist?(path)
-      YAML.load_file(path.to_s)
+      Example.read_database_config
     end
   end
 

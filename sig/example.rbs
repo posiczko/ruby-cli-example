@@ -1,7 +1,5 @@
-# The `lib/` directory, and the gemspec loaded at boot. Both are defined in
-# lib/example.rb and read across the codebase.
+# The `lib/` directory, defined in lib/example.rb and read across the codebase.
 ROOT_DIR: Pathname
-GEM_SPEC: Gem::Specification
 
 # The gem's root namespace.
 #
@@ -11,6 +9,12 @@ GEM_SPEC: Gem::Specification
 # schema built that way. Adding a setting therefore needs no change here.
 module Example
   extend Dry::Configurable
+
+  def self.database_settings: () -> Hash[String, untyped]
+
+  def self.database_config_path: () -> Pathname
+
+  def self.read_database_config: () -> Hash[String, untyped]
 
   module CLI
     extend Dry::CLI::Registry
@@ -25,6 +29,8 @@ module Example
       attr_reader config: Hash[Symbol, untyped]
 
       def call: (**untyped options) -> void
+
+      def die: (String message) -> bot
     end
   end
 end
