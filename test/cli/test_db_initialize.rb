@@ -46,11 +46,13 @@ class TestCLIDBInitialize < Minitest::Test
   end
 
   # Hand-rolled stub for the command's one collaborator: records each config
-  # it is called with and returns the given result.
+  # it is called with and returns the given result. The method is removed
+  # before each definition so Ruby's -w does not report a redefinition.
   def with_initializer_returning(result)
     calls = []
     service = Example::Services::DbInitializer
     original = service.method(:call)
+    service.singleton_class.remove_method(:call)
     service.define_singleton_method(:call) { |config|
       calls << config
       result
@@ -58,6 +60,7 @@ class TestCLIDBInitialize < Minitest::Test
     yield
     calls
   ensure
+    service.singleton_class.remove_method(:call)
     service.define_singleton_method(:call, original)
   end
 end
